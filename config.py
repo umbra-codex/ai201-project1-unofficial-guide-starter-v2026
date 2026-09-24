@@ -20,20 +20,20 @@ load_dotenv(ROOT / ".env")
 # Change this to switch corpora, or pass --corpus on the command line.
 # Options are the folder names inside corpora/. See corpora/README.md.
 
-CORPUS = os.getenv("AI201_CORPUS", "campus_life")
+CORPUS = os.getenv("AI201_CORPUS")
 
 
 # ─── Chunking (Milestone 3) ──────────────────────────────────────────────────
 # These are deliberately plain, generic numbers. Milestone 3 is where you
 # replace them with numbers that fit the documents you actually read.
 
-CHUNK_SIZE = 800        # characters per chunk
-CHUNK_OVERLAP = 120     # characters shared between neighbouring chunks
+CHUNK_SIZE = 800  # characters per chunk
+CHUNK_OVERLAP = 120  # characters shared between neighbouring chunks
 
 
 # ─── Retrieval (Milestone 4) ─────────────────────────────────────────────────
 
-TOP_K = 5               # how many chunks to pull back per question
+TOP_K = 5  # how many chunks to pull back per question
 
 # The relevance gate. If the best chunk is further away than this, the system
 # refuses to answer instead of handing the model thin material.
@@ -65,9 +65,9 @@ MODEL = os.getenv("AI201_MODEL", "gemini-3.5-flash-lite")
 # You should not need to touch these. They exist so that a runaway loop costs
 # you a warning instead of your whole day's allowance.
 
-REQUESTS_PER_MINUTE = 30       # outgoing calls the limiter will allow per minute
-SESSION_REQUEST_BUDGET = 300   # stop and warn rather than draining the daily quota
-MAX_RETRIES = 4                # on 429 / resource-exhausted, with backoff
+REQUESTS_PER_MINUTE = 30  # outgoing calls the limiter will allow per minute
+SESSION_REQUEST_BUDGET = 300  # stop and warn rather than draining the daily quota
+MAX_RETRIES = 4  # on 429 / resource-exhausted, with backoff
 
 CACHE_ENABLED = os.getenv("AI201_CACHE", "1") != "0"
 CACHE_DIR = ROOT / ".cache"
@@ -102,7 +102,7 @@ def collection_name(name: str | None = None, variant: str = "default") -> str:
 
     raw = f"{name or CORPUS}__{variant}"
     cleaned = re.sub(r"[^A-Za-z0-9_-]", "-", raw)
-    cleaned = cleaned.strip("_-")          # must start and end alphanumeric
+    cleaned = cleaned.strip("_-")  # must start and end alphanumeric
     if not cleaned or not cleaned[0].isalnum():
         cleaned = f"c{cleaned}"
     if not cleaned[-1].isalnum():
