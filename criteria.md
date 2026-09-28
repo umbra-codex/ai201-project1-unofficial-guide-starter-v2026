@@ -4,13 +4,13 @@ Five criteria that say what "working" means for this system, written in unit 1
 **before** any results existed.
 
 An acceptance criterion names a target: a number, a count, a rate, or something
-a person could plainly observe. *"Retrieval works"* is an opinion. *"For at
+a person could plainly observe. _"Retrieval works"_ is an opinion. _"For at
 least 4 of my 5 test questions, the top results include a chunk containing the
-answer"* is a criterion.
+answer"_ is a criterion.
 
 Under each one, write a sentence or two on **why that target** and not a
 stricter or looser one. A reason that says something about your corpus or your
-pipeline earns credit; *"80% seemed reasonable"* does not.
+pipeline earns credit; _"80% seemed reasonable"_ does not.
 
 > Missing your own targets next unit costs you nothing. Setting a target so
 > easy you can't miss it does.
@@ -55,43 +55,23 @@ in at least 4 of 5 tries.
 
 ---
 
-## 4. Something about your chunks
+## 4. One topic per chunk
 
-<!-- YOU WRITE THIS ONE.
-
-     How would you know if your chunks were the right size? Name something
-     countable or observable.
-
-     Examples of the right shape — don't copy these, they should come from
-     what you actually saw in Milestone 3:
-       - "At least 4 of 5 sampled chunks read as a complete thought, with no
-          sentence cut in half at either end."
-       - "No chunk is shorter than 200 characters, since anything below that
-          in my corpus turned out to be a heading with no content under it." -->
-
-
+At least 4 of 5 sampled chunks discuss only one thread's topic, with no chunk blending content from two different threads.
 
 **Why this target:**
-
-
+Each file in `advice_threads` is a self-contained thread on one topic; a chunk spanning two threads would mean my `CHUNK_SIZE`/boundaries aren't respecting document breaks, which would hurt retrieval precision.
 
 ---
 
-## 5. Your choice
+## 5. No hallucinated answers
 
-<!-- YOU WRITE THIS ONE TOO.
-
-     Pick something you actually care about getting right. It could be about
-     speed, about refusals, about a particular kind of question your corpus
-     handles badly, about source attribution being correct rather than merely
-     present — anything, as long as it names a number or an observable
-     outcome. -->
-
-
+When the retrieved chunks don't actually contain the answer, the system says "I don't have enough information about that topic" rather than answering anyway-in at least four of five tries.
 
 **Why this target:**
-
-
+Distinct from criterion #3 (out-of-corpus). This catches in-corpus-adjacent
+questions where retrieval returns chunks, but none actually answer them.
+That's the case where a model most tempted to guess.
 
 ---
 
