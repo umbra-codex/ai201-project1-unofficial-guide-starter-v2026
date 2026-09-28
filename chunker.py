@@ -33,9 +33,9 @@ class Chunk:
     """One piece of one document."""
 
     text: str
-    source: str        # which file it came from
-    index: int         # which chunk within that file, starting at 0
-    produced_by: str   # the function that made it — cite this in your README
+    source: str  # which file it came from
+    index: int  # which chunk within that file, starting at 0
+    produced_by: str  # the function that made it — cite this in your README
 
     @property
     def label(self) -> str:
@@ -96,8 +96,63 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
       - Is the useful information in one sentence, or spread over a paragraph?
       - Would splitting on paragraph breaks keep more thoughts intact than
         splitting on a character count?
+
+    Strategy: a document that fits in `config.CHUNK_SIZE` stays whole, so a
+    thread keeps its replies together. A longer one is packed paragraph by
+    paragraph, cutting only at blank lines. No overlap: cuts land between
+    thoughts, so there is nothing to carry across them.
     """
-    return fallback_split(documents)
+    chunks: list[Chunk] = []
+    for doc in documents:
+        pieces = _pack_paragraphs(doc.text, config.CHUNK_SIZE)
+        chunks.extend(
+            Chunk(
+                text=piece,
+                source=doc.source,
+                index=index,
+                produced_by="chunker.py::split_documents",
+            )
+            for index, piece in enumerate(pieces)
+        )
+    return chunks
+
+
+def _pack_paragraphs(text: str, limit: int) -> list[str]:
+    """Group paragraphs into pieces of at most `limit` characters.
+
+    A single paragraph longer than `limit` is the only thing cut mid-text,
+    in plain fixed windows, because there is no better boundary inside it.
+    """
+    text = text.strip()
+    if not text:
+        return []
+    if len(text) <= limit:
+        return [text]
+
+    pieces: list[str] = []
+    current = ""
+    for paragraph in (p.strip() for p in text.split("\n\n")):
+        if not paragraph:
+            continue
+        if len(paragraph) > limit:
+            if current:
+                pieces.append(current)
+                current = ""
+            pieces.extend(
+                window
+                for start in range(0, len(paragraph), limit)
+                if (window := paragraph[start : start + limit].strip())
+            )
+            continue
+        candidate = f"{current}\n\n{paragraph}" if current else paragraph
+        if len(candidate) <= limit:
+            current = candidate
+        else:
+            pieces.append(current)
+            current = paragraph
+    if current:
+        pieces.append(current)
+    return pieces
 
 
 def describe(chunks: list[Chunk]) -> str:
