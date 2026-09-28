@@ -44,6 +44,7 @@ TOP_K = 3  # how many chunks to pull back per question
 # measure your own two groups of distances and put the cutoff in the gap.
 # Most corpora land somewhere between 0.45 and 0.75.
 THRESHOLD = 0.7
+MEMORY_TURNS = 2
 
 
 # ─── Models ──────────────────────────────────────────────────────────────────

@@ -195,6 +195,7 @@ def ask_pipeline(
     on_gate=None,
     on_prompt=None,
     sources=None,
+    history=None,
 ):
     """Retrieve, gate, answer. Returns the outcome and prints nothing.
 
@@ -215,8 +216,15 @@ def ask_pipeline(
     from generate import answer_from_chunks, build_prompt
     from store import search
 
+    if history:
+        from generate import condense_question
+
+        query = condense_question(question, history)
+    else:
+        query = question
+
     results = search(
-        question,
+        query,
         top_k=top_k or config.TOP_K,
         corpus=corpus or config.CORPUS,
         variant=variant,
@@ -228,6 +236,7 @@ def ask_pipeline(
 
     outcome = {
         "question": question,
+        "query": query,
         "refused": not decision.passed,
         "best_distance": decision.best_distance,
         "threshold": decision.threshold,
@@ -239,12 +248,12 @@ def ask_pipeline(
         outcome["answer"] = gate.REFUSAL
         return outcome
 
-    prompt = build_prompt(question, results)
+    prompt = build_prompt(query, results, history)
     if on_prompt is not None:
         on_prompt(prompt)
 
     outcome["prompt"] = prompt
-    outcome["answer"] = answer_from_chunks(question, results)
+    outcome["answer"] = answer_from_chunks(query, results, history=history)
     outcome["sources"] = sorted({r.source for r in results})
     return outcome
 
@@ -258,6 +267,7 @@ def _ask_one(
     show_distances=True,
     show_prompt=False,
     sources=None,
+    history=None,
 ):
     import gate
     from generate import GROUNDING_INSTRUCTION
@@ -286,7 +296,11 @@ def _ask_one(
         on_gate=print_distances if show_distances else None,
         on_prompt=print_prompt if show_prompt else None,
         sources=sources,
+        history=history,
     )
+
+    if outcome["query"] != question:
+        print(f"  (searched as: {outcome['query']})")
 
     if outcome["refused"]:
         print(f"\n{gate.REFUSAL}\n")
@@ -299,6 +313,7 @@ def _ask_one(
 
 def cmd_ask(args):
     corpus = args.corpus or config.CORPUS
+    import gate
     import generate as gen
 
     try:
@@ -314,6 +329,7 @@ def cmd_ask(args):
             )
         else:
             print("Ask a question, or press Enter on an empty line to quit.\n")
+            history = []
             while True:
                 try:
                     question = input("> ").strip()
@@ -322,7 +338,7 @@ def cmd_ask(args):
                     break
                 if not question:
                     break
-                _ask_one(
+                answer = _ask_one(
                     question,
                     corpus,
                     args.variant,
@@ -330,7 +346,10 @@ def cmd_ask(args):
                     args.threshold,
                     show_prompt=args.show_prompt,
                     sources=args.source,
+                    history=history[-config.MEMORY_TURNS :],
                 )
+                if answer != gate.REFUSAL:
+                    history.append((question, answer))
     finally:
         print(gen.usage())
 

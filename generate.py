@@ -251,12 +251,14 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
             message = str(exc).lower()
             rate_limited = (
                 "429" in message
-                or "resource" in message and "exhaust" in message
-                or "rate" in message and "limit" in message
+                or "resource" in message
+                and "exhaust" in message
+                or "rate" in message
+                and "limit" in message
             )
             if not rate_limited:
                 raise
-            backoff = 2 ** attempt
+            backoff = 2**attempt
             print(
                 f"  [rate limit] service pushed back. Retrying in {backoff}s "
                 f"(attempt {attempt + 1} of {config.MAX_RETRIES}).",
@@ -283,7 +285,7 @@ Rules:
 - If the documents answer part of the question, give that part and say which part they don't cover."""
 
 
-def build_prompt(question: str, results) -> str:
+def build_prompt(question: str, results, history=None) -> str:
     """
     Assemble the grounded prompt out of retrieved chunks.
 
@@ -292,17 +294,22 @@ def build_prompt(question: str, results) -> str:
     this returns. Reading it once is the fastest way to see that retrieval,
     not the model, decides what an answer can possibly be based on.
     """
-    context = "\n\n".join(
-        f"[from {r.source}]\n{r.text}" for r in results
-    )
+    context = "\n\n".join(f"[from {r.source}]\n{r.text}" for r in results)
+    earlier = ""
+    if history:
+        turns = "\n\n".join(f"Q: {q}\nA: {a}" for q, a in history)
+        earlier = (
+            f"Earlier in this conversation (not a source, only tells you what "
+            f"the question refers to):\n\n{turns}\n\n---\n\n"
+        )
     return (
-        f"Documents:\n\n{context}\n\n"
-        f"---\n\nQuestion: {question}\n\n"
+        f"Documents:\n\n{context}\n\n---\n\n"
+        f"{earlier}Question: {question}\n\n"
         f"Answer using only the documents above, and name the file you used."
     )
 
 
-def answer_from_chunks(question: str, results, cache: bool = True) -> str:
+def answer_from_chunks(question: str, results, cache: bool = True, history=None) -> str:
     """
     Build a grounded prompt out of retrieved chunks and send it.
 
@@ -310,5 +317,18 @@ def answer_from_chunks(question: str, results, cache: bool = True) -> str:
     first — it has already decided these chunks are close enough to be worth
     answering from.
     """
-    prompt = build_prompt(question, results)
+    prompt = build_prompt(question, results, history)
     return generate(prompt, system=GROUNDING_INSTRUCTION, cache=cache)
+
+
+CONDENSE_INSTRUCTION = """Rewrite the latest question as a standalone question.
+Use the earlier conversation only to fill in what words like "it", "that" or "there" refer to.
+If the latest question is about a new topic, return it unchanged.
+Reply with the question only."""
+
+
+def condense_question(question: str, history) -> str:
+    """Turn a follow-up into a question that can be searched and gated on its own."""
+    turns = "\n\n".join(f"Q: {q}\nA: {a}" for q, a in history)
+    prompt = f"Earlier conversation:\n\n{turns}\n\n---\n\nLatest question: {question}"
+    return generate(prompt, system=CONDENSE_INSTRUCTION).strip()
