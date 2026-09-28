@@ -31,8 +31,10 @@ def cmd_corpora(args):
 
 
 def cmd_index(args):
-    from ingest import load_documents, describe as describe_docs
-    from chunker import split_documents, describe as describe_chunks
+    from chunker import describe as describe_chunks
+    from chunker import split_documents
+    from ingest import describe as describe_docs
+    from ingest import load_documents
     from store import build_index
 
     corpus = args.corpus or config.CORPUS
@@ -51,7 +53,7 @@ def cmd_index(args):
 
     elapsed = time.time() - started
     print(f"  stored   {count} chunks in {elapsed:.1f}s")
-    print(f"\nReady. Try: python app.py ask \"your question here\"")
+    print(f'\nReady. Try: python app.py ask "your question here"')
 
 
 def _chunks_from_doc(chunks, wanted):
@@ -87,7 +89,9 @@ def _chunks_at(chunks, spec):
     try:
         positions = [int(piece) for piece in spec.split(",") if piece.strip()]
     except ValueError:
-        raise SystemExit(f"--indices wants whole numbers separated by commas, not '{spec}'")
+        raise SystemExit(
+            f"--indices wants whole numbers separated by commas, not '{spec}'"
+        )
 
     picked = []
     for position in positions:
@@ -100,8 +104,8 @@ def _chunks_at(chunks, spec):
 
 def cmd_chunks(args):
     """Milestone 3. Print chunks so you can read them and paste them."""
-    from ingest import load_documents
     from chunker import split_documents
+    from ingest import load_documents
 
     chunks = split_documents(load_documents(args.corpus or config.CORPUS))
 
@@ -146,18 +150,25 @@ def cmd_chunks(args):
 
 def cmd_retrieve(args):
     """Milestone 4. Retrieval only, with distances, and no model call."""
-    from store import search
     import gate
+    from store import search
 
     results = search(
         args.question,
         top_k=args.top_k or config.TOP_K,
         corpus=args.corpus or config.CORPUS,
         variant=args.variant,
+        sources=args.source,
     )
 
     if not results:
-        print("Nothing came back. Have you run `python app.py index`?")
+        if args.source:
+            print(
+                f"No chunks match --source {', '.join(args.source)}. "
+                "Check the filenames against `python app.py chunks`."
+            )
+        else:
+            print("Nothing came back. Have you run `python app.py index`?")
         return
 
     print(f"\nQuestion: {args.question}\n")
@@ -183,6 +194,7 @@ def ask_pipeline(
     threshold=None,
     on_gate=None,
     on_prompt=None,
+    sources=None,
 ):
     """Retrieve, gate, answer. Returns the outcome and prints nothing.
 
@@ -199,15 +211,16 @@ def ask_pipeline(
     prompt just before it goes out — that's how `--show-prompt` shows you the
     prompt while the model is still thinking rather than after.
     """
-    from store import search
     import gate
     from generate import answer_from_chunks, build_prompt
+    from store import search
 
     results = search(
         question,
         top_k=top_k or config.TOP_K,
         corpus=corpus or config.CORPUS,
         variant=variant,
+        sources=sources,
     )
     decision = gate.check(results, threshold=threshold)
     if on_gate is not None:
@@ -244,6 +257,7 @@ def _ask_one(
     threshold,
     show_distances=True,
     show_prompt=False,
+    sources=None,
 ):
     import gate
     from generate import GROUNDING_INSTRUCTION
@@ -271,6 +285,7 @@ def _ask_one(
         threshold=threshold,
         on_gate=print_distances if show_distances else None,
         on_prompt=print_prompt if show_prompt else None,
+        sources=sources,
     )
 
     if outcome["refused"]:
@@ -295,6 +310,7 @@ def cmd_ask(args):
                 args.top_k,
                 args.threshold,
                 show_prompt=args.show_prompt,
+                sources=args.source,
             )
         else:
             print("Ask a question, or press Enter on an empty line to quit.\n")
@@ -313,6 +329,7 @@ def cmd_ask(args):
                     args.top_k,
                     args.threshold,
                     show_prompt=args.show_prompt,
+                    sources=args.source,
                 )
     finally:
         print(gen.usage())
@@ -334,7 +351,9 @@ def build_parser():
 
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("corpora", help="list available corpora").set_defaults(func=cmd_corpora)
+    sub.add_parser("corpora", help="list available corpora").set_defaults(
+        func=cmd_corpora
+    )
 
     p_index = sub.add_parser("index", help="build the search index")
     p_index.set_defaults(func=cmd_index)
@@ -360,6 +379,12 @@ def build_parser():
     p_ret = sub.add_parser("retrieve", help="show distances only (Milestone 4)")
     p_ret.add_argument("question")
     p_ret.add_argument("--top-k", type=int)
+    p_ret.add_argument(
+        "--source",
+        action="append",
+        metavar="FILE",
+        help="only search this thread (repeat to allow several)",
+    )
     p_ret.set_defaults(func=cmd_retrieve)
 
     p_ask = sub.add_parser("ask", help="ask a question")
@@ -370,6 +395,12 @@ def build_parser():
         "--show-prompt",
         action="store_true",
         help="print the assembled prompt before the answer",
+    )
+    p_ask.add_argument(
+        "--source",
+        action="append",
+        metavar="FILE",
+        help="only search this thread (repeat to allow several)",
     )
     p_ask.set_defaults(func=cmd_ask)
 

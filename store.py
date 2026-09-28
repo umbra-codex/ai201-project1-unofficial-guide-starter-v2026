@@ -40,7 +40,7 @@ class Result:
     text: str
     source: str
     label: str
-    distance: float   # LOWER IS BETTER. 0.3 is close, 0.9 is unrelated.
+    distance: float  # LOWER IS BETTER. 0.3 is close, 0.9 is unrelated.
     produced_by: str
 
 
@@ -183,6 +183,7 @@ def search(
     top_k: int | None = None,
     corpus: str | None = None,
     variant: str = "default",
+    sources: list[str] | None = None,
 ) -> list[Result]:
     """
     Retrieve the chunks closest in meaning to a question.
@@ -199,9 +200,12 @@ def search(
             f"No index called '{name}'. Run `python app.py index` first."
         ) from exc
 
+    where = {"source": {"$in": sources}} if sources else None
+
     raw = collection.query(
         query_embeddings=embed([question]),
         n_results=min(top_k, collection.count()),
+        where=where,
     )
 
     results: list[Result] = []
