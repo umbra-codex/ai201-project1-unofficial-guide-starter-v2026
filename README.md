@@ -29,8 +29,8 @@
 
 ## Chunking Strategy
 
-**Chunk Size: 800**
-**Overlap: 0**
+**Chunk Size:** 800
+**Overlap:** 0
 
 The `advice_threads` corpus is 23 forum threads, 320 to 796 characters
 each: a question, then two to five replies. In Milestone 1, I noticed the
@@ -142,11 +142,14 @@ without reading what came before or after?
 <!-- One complete question and answer, pasted as text, with the source line
      visible. Milestone 4. -->
 
-**Question:**
+**Question:** What is the CPU, and how much memory is within the laptop?
 
-**Answer:**
+**Answer:** Based on the provided documents, there is no mention of the laptop's CPU. However, regarding memory, the documents suggest having 16GB of RAM (thread_laptop_specs.txt).
 
 ```
+Sources retrieved: thread_laptop_specs.txt, thread_laundry_timing.txt, thread_printing.txt
+
+1 model calls this session, 579 tokens (538 in, 41 out)
 
 ```
 
@@ -161,9 +164,18 @@ without reading what came before or after?
 
      Milestone 4. -->
 
-| Question | In corpus? | Best distance |
-| -------- | ---------- | ------------- |
-|          |            |               |
+| Question                                                             | In corpus? | Best distance |
+| -------------------------------------------------------------------- | ---------- | ------------- |
+| What is the CPU, and how much memory is within the laptop?           | Yes        | 0.440         |
+| When is the deadline to have my transfer credits accepted?           | Yes        | 0.480         |
+| What are the most common regrets for first-year students?            | Yes        | 0.596         |
+| Is it too late to change majors as a third- or fourth-year student?  | Yes        | 0.402         |
+| What is the deadline for assignments before they're considered late? | Yes        | 0.413         |
+| What is the capital of Mongolia?                                     | No         | 0.948         |
+| How do I change the oil in a diesel engine?                          | No         | 0.930         |
+| Who won the 1994 World Cup?                                          | No         | 0.952         |
+| What is the recommended dosage of ibuprofen for a headache?          | No         | 0.828         |
+| How do I write a for loop in Rust?                                   | No         | 0.8712        |
 
 ## How I Used AI
 
