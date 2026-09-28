@@ -1,19 +1,13 @@
 # The Unofficial Guide
 
-<!-- Replace this line with your name and which corpus you picked. -->
+Name: Sean Humphreys
+Corpus: `advice_threads`
 
-> **This file is your submission.** Fill it in as you go — most sections get
-> written during the milestone that produces them, not at the end.
->
-> How the starter works, and every command you'll need, is in `RUNNING.md`.
-> Leave that file alone.
->
-> **Paste everything as text.** No screenshots, no video. A typed table gets
-> full credit; a picture of the same table gets none.
->
-> Delete these instruction blocks as you replace them. The `<!-- -->` comments
-> are notes to you and don't show up when the page renders — you can leave them
-> or remove them.
+# Stretch Features
+
+I'm adding two stretch features: metadata filtering, so you can narrow a search
+to specific threads by source, and conversation memory, so a follow-up question
+in the same session can build on the last one.
 
 ---
 
@@ -21,11 +15,11 @@
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
-
-     Milestone 5. -->
+This system answers questions from `advice_threads`, a corpus of 23 student
+forum threads about college life. Ask it how much RAM a CS laptop needs or
+whether it's too late to change majors, and it answers from what students
+wrote, naming the thread it used. When the threads don't cover a question, it
+says so instead of guessing.
 
 ## Chunking Strategy
 
@@ -188,9 +182,11 @@ Sources retrieved: thread_laptop_specs.txt, thread_laundry_timing.txt, thread_pr
 
      Milestone 5. -->
 
-**1.**
+**1.** I asked Claude to give a summary of the documents in advice_threads so I
+can think of questions for Milestone 2.
 
-**2.**
+**2.** I asked Claude for a guide to create the split_documents function and had
+it verify the logic and output when completed.
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never
